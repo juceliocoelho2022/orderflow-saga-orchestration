@@ -1,0 +1,1 @@
+package com.orderflow.contracts; import java.math.BigDecimal; import java.util.List; public record OrderPayload(String orderId, List<ProductItem> products, BigDecimal totalAmount, int totalItems) {}

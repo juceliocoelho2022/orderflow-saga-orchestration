@@ -1,0 +1,2 @@
+package com.orderflow.orderservice.domain; import org.springframework.data.annotation.Id; import org.springframework.data.mongodb.core.mapping.Document; import java.time.Instant; import java.util.ArrayList; import java.util.List;
+@Document("saga_history") public class SagaHistory { @Id public String id; public String orderId; public String transactionId; public String status; public List<String> events=new ArrayList<>(); public Instant updatedAt; public SagaHistory(){} }

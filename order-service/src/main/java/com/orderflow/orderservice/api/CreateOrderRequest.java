@@ -1,0 +1,1 @@
+package com.orderflow.orderservice.api; import com.orderflow.contracts.ProductItem; import java.util.List; public record CreateOrderRequest(List<ProductItem> products) {}

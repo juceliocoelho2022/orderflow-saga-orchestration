@@ -1,0 +1,1 @@
+package com.orderflow.contracts; import java.math.BigDecimal; public record ProductItem(String code, BigDecimal unitValue, int quantity) {}

@@ -1,0 +1,1 @@
+package com.orderflow.orderservice.domain; import org.springframework.data.mongodb.repository.MongoRepository; import java.util.Optional; public interface SagaHistoryRepository extends MongoRepository<SagaHistory,String>{ Optional<SagaHistory> findByOrderId(String orderId); Optional<SagaHistory> findByTransactionId(String transactionId); }

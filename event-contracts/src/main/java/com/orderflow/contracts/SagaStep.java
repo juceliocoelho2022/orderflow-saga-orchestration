@@ -1,0 +1,1 @@
+package com.orderflow.contracts; public enum SagaStep { ORDER, PRODUCT_VALIDATION, PAYMENT, INVENTORY, ORCHESTRATOR }

@@ -1,0 +1,1 @@
+package com.orderflow.payment; import jakarta.persistence.*; import java.math.BigDecimal; @Entity public class Payment { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) public Long id; public String orderId; public BigDecimal amount; public String status; public Payment(){} }

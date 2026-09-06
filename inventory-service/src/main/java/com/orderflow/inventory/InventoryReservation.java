@@ -1,0 +1,1 @@
+package com.orderflow.inventory; import jakarta.persistence.*; @Entity public class InventoryReservation { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) public Long id; public String orderId; public String status; public InventoryReservation(){} }

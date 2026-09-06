@@ -1,0 +1,1 @@
+package com.orderflow.contracts; public enum SagaStatus { STARTED, SUCCESS, FAILED, ROLLBACK, FINISHED }

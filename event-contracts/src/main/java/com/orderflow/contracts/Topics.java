@@ -1,0 +1,2 @@
+package com.orderflow.contracts;
+public final class Topics { private Topics(){} public static final String START="order.saga.start"; public static final String PRODUCT="product.validation"; public static final String PAYMENT="payment.process"; public static final String INVENTORY="inventory.reserve"; public static final String ORCHESTRATOR="saga.orchestrator"; public static final String ORDER_NOTIFY="order.saga.notify"; }

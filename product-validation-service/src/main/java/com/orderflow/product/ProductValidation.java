@@ -1,0 +1,1 @@
+package com.orderflow.product; import jakarta.persistence.*; @Entity public class ProductValidation { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) public Long id; public String orderId; public String status; public ProductValidation(){} }
