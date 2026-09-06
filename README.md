@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/orderflow-architecture.png" alt="OrderFlow - Event-Driven Order Processing Architecture" width="100%">
+</p>
+
 # OrderFlow — Saga Orchestration
 
 Projeto de estudo/portfólio de microsserviços com **Java 21, Spring Boot, Apache Kafka, MongoDB, PostgreSQL e Docker**, implementando Saga Orquestrada.
