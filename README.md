@@ -20,6 +20,25 @@
 
 ---
 
+## Technical Snapshot
+
+| Focus | Evidence in this project |
+|---|---|
+| Target roles | Java Backend Developer · Backend Engineer · Software Engineer |
+| Architecture | Microservices · Saga Orchestration · Event-Driven Architecture |
+| Backend | Java · Spring Boot · REST APIs |
+| Messaging | Apache Kafka |
+| Distributed consistency | Saga Pattern · Compensating Transactions · Eventual Consistency |
+| Data | PostgreSQL · MongoDB |
+| Infrastructure | Docker · Docker Compose |
+
+**Engineering highlights:** coordenação de fluxo distribuído entre serviços, tratamento de falhas parciais e compensações, comunicação assíncrona e consistência eventual.
+
+**Keywords:** `Java Backend` `Spring Boot` `Microservices` `Saga Pattern` `Apache Kafka` `Distributed Systems` `Eventual Consistency` `PostgreSQL` `MongoDB` `Docker`
+
+---
+
+
 ## Sobre o projeto
 
 O **OrderFlow** simula um fluxo de pedidos de ponta a ponta em uma arquitetura de microsserviços orientada a eventos. Em vez de utilizar uma transação ACID única envolvendo vários bancos, cada serviço mantém seus próprios dados e o **Saga Orchestrator** coordena a execução do processo distribuído através do Kafka.
