@@ -22,6 +22,8 @@
 
 
 > **Engineering decisions & trade-offs:** [docs/engineering-decisions.md](docs/engineering-decisions.md) — contexto, alternativas consideradas, custos das escolhas, estratégia de testes e diagnóstico operacional.
+>
+> **Reliability hardening:** [docs/reliability-hardening.md](docs/reliability-hardening.md) — idempotência durável, Transactional Outbox, retry/DLT, correlation id, compensação confirmada e métricas.
 
 ## Technical Snapshot
 
@@ -32,10 +34,13 @@
 | Backend | Java · Spring Boot · REST APIs |
 | Messaging | Apache Kafka |
 | Distributed consistency | Saga Pattern · Compensating Transactions · Eventual Consistency |
+| Reliability | Idempotent Consumers · Transactional Outbox · Retry/DLT · At-least-once |
+| Traceability | eventId · transactionId · correlationId |
+| Observability | Actuator · Micrometer · Prometheus |
 | Data | PostgreSQL · MongoDB |
-| Infrastructure | Docker · Docker Compose |
+| Delivery | GitHub Actions · Maven verify · Docker Compose |
 
-**Engineering highlights:** coordenação de fluxo distribuído entre serviços, tratamento de falhas parciais e compensações, comunicação assíncrona e consistência eventual.
+**Engineering highlights:** coordenação de fluxo distribuído, idempotência durável, Outbox transacional, retry/DLT, compensação confirmada, correlation id e métricas operacionais.
 
 **Keywords:** `Java Backend` `Spring Boot` `Microservices` `Saga Pattern` `Apache Kafka` `Distributed Systems` `Eventual Consistency` `PostgreSQL` `MongoDB` `Docker`
 
@@ -75,7 +80,7 @@ Apache Kafka <------> Saga Orchestrator
 | Módulo | Responsabilidade | Persistência |
 |---|---|---|
 | `order-service` | Expõe a API REST, cria o pedido, inicia a Saga e recebe seu resultado final | MongoDB |
-| `saga-orchestrator` | Coordena comandos, eventos, transições e compensações da Saga | — |
+| `saga-orchestrator` | Coordena comandos, eventos, idempotência, Outbox, transições e compensações da Saga | PostgreSQL |
 | `product-validation-service` | Valida os produtos envolvidos no pedido | PostgreSQL |
 | `payment-service` | Processa pagamento e executa estorno quando necessário | PostgreSQL |
 | `inventory-service` | Reserva estoque e participa do fluxo de compensação | PostgreSQL |
@@ -118,11 +123,12 @@ PAYMENT             OK
 INVENTORY           FAILED
         |
         v
-COMPENSATION
+REFUND REQUESTED
         |
         v
-PAYMENT REFUND
+PAYMENT REFUNDED
         |
+        | ROLLBACK CONFIRMED
         v
 ORDER CANCELLED
 ```
@@ -143,7 +149,13 @@ inventory-events
 saga-events
 ```
 
-A evolução do projeto irá reforçar essa comunicação com **idempotência, retry, Dead Letter Topics e Transactional Outbox**.
+A comunicação agora usa **at-least-once + consumidores idempotentes**, retry limitado, Dead Letter Topics e Transactional Outbox. O projeto não reivindica exactly-once global.
+
+Cada evento carrega três identificadores com responsabilidades diferentes:
+
+- `eventId`: deduplicação de uma mensagem;
+- `transactionId`: identidade da Saga;
+- `correlationId`: rastreabilidade ponta a ponta em logs e eventos.
 
 ## Stack
 
@@ -159,7 +171,7 @@ A evolução do projeto irá reforçar essa comunicação com **idempotência, r
 | Health checks | Spring Boot Actuator |
 | Visualização Kafka | Kafka UI |
 | Testes | JUnit 5 / Mockito / JaCoCo |
-| Observabilidade planejada | Prometheus / Grafana / OpenTelemetry |
+| Observabilidade | Actuator / Micrometer / Prometheus |
 
 ## Portas locais
 
@@ -176,6 +188,8 @@ A evolução do projeto irá reforçar essa comunicação com **idempotência, r
 | Product PostgreSQL | `5432` |
 | Payment PostgreSQL | `5433` |
 | Inventory PostgreSQL | `5434` |
+| Saga PostgreSQL | `5435` |
+| Prometheus | `9090` |
 
 ## Como executar
 
@@ -194,12 +208,14 @@ git clone https://github.com/juceliocoelho2022/orderflow-saga-orchestration.git
 cd orderflow-saga-orchestration
 ```
 
-### 2. Suba a infraestrutura
+### 2. Suba a stack completa
 
 ```bash
-docker compose up -d
-docker compose ps
+docker compose -f docker-compose.yml -f compose-apps.yml up -d --build
+docker compose -f docker-compose.yml -f compose-apps.yml ps
 ```
+
+Para subir somente infraestrutura, use `docker compose up -d`.
 
 ### 3. Compile e execute os testes
 
@@ -276,7 +292,9 @@ Order
   -> Product Validation SUCCESS
   -> Payment SUCCESS
   -> Inventory FAILED
-  -> Payment Refund
+  -> Refund requested
+  -> Payment REFUNDED
+  -> Compensation confirmation
   -> Order CANCELLED
 ```
 
@@ -305,19 +323,19 @@ orderflow-saga-orchestration/
 - [x] Banco isolado por contexto de serviço
 - [x] Fluxo básico de compensação
 - [x] Docker Compose para infraestrutura local
-- [ ] Idempotent Consumers
-- [ ] Retry com backoff
-- [ ] Dead Letter Topics (DLT)
-- [ ] Transactional Outbox Pattern
+- [x] Idempotent Consumers
+- [x] Retry com backoff
+- [x] Dead Letter Topics (DLT)
+- [x] Transactional Outbox Pattern
 - [ ] Testcontainers para Kafka, MongoDB e PostgreSQL
 - [ ] Quality Gate com JaCoCo
 - [ ] Distributed Tracing com OpenTelemetry
-- [ ] Métricas com Prometheus
+- [x] Métricas com Prometheus
 - [ ] Dashboards Grafana
 - [ ] Resilience4j
 - [ ] API Gateway
 - [ ] Spring Security + JWT
-- [ ] CI/CD com GitHub Actions
+- [x] CI com GitHub Actions
 - [ ] Containerização dos microsserviços
 - [ ] Kubernetes
 - [ ] Terraform / Cloud
@@ -335,6 +353,23 @@ Cada microsserviço é responsável pelo próprio modelo e persistência. Isso e
 
 **Por que compensação?**  
 Não existe rollback ACID único entre MongoDB, múltiplos PostgreSQL e Kafka. Operações compensatórias tratam efeitos já confirmados quando uma etapa posterior falha.
+
+## Reliability hardening implementado
+
+O incremento de confiabilidade adiciona:
+
+- marcação durável de eventos processados nos serviços PostgreSQL;
+- Outbox na mesma transação do efeito de negócio;
+- Outbox embutido no documento Mongo para criação atômica de pedido + evento inicial;
+- publisher at-least-once;
+- retry com backoff fixo e DLT;
+- confirmação do refund antes do cancelamento;
+- correlation id propagado em toda a Saga;
+- métricas de conclusão, falha, compensação, duplicidade, retry, DLT e Outbox;
+- testes automatizados de duplicidade e compensação;
+- CI com `mvn clean verify`, validação de Compose e `promtool`.
+
+Detalhes: [docs/reliability-hardening.md](docs/reliability-hardening.md).
 
 ## Objetivos de evolução
 
