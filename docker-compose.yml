@@ -10,24 +10,59 @@ services:
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
       KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     ports: ["8081:8080"]
-    environment: ["KAFKA_CLUSTERS_0_NAME=orderflow", "KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092"]
+    environment:
+      KAFKA_CLUSTERS_0_NAME: orderflow
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     depends_on: [kafka]
+
   mongodb:
     image: mongo:8
     ports: ["27017:27017"]
-    environment: ["MONGO_INITDB_ROOT_USERNAME=admin", "MONGO_INITDB_ROOT_PASSWORD=123456"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: "123456"
+
   product-db:
     image: postgres:17
     ports: ["5432:5432"]
-    environment: ["POSTGRES_DB=productdb", "POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"]
+    environment:
+      POSTGRES_DB: productdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
   payment-db:
     image: postgres:17
     ports: ["5433:5432"]
-    environment: ["POSTGRES_DB=paymentdb", "POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"]
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
   inventory-db:
     image: postgres:17
     ports: ["5434:5432"]
-    environment: ["POSTGRES_DB=inventorydb", "POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"]
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  saga-db:
+    image: postgres:17
+    ports: ["5435:5432"]
+    environment:
+      POSTGRES_DB: sagadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  prometheus:
+    image: prom/prometheus:v3.13.1
+    ports: ["9090:9090"]
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    restart: unless-stopped
