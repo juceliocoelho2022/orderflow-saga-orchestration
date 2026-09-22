@@ -2,20 +2,39 @@ services:
   order-service:
     build: ./order-service
     ports: ["3000:3000"]
-    environment: ["KAFKA_BOOTSTRAP_SERVERS=kafka:29092", "MONGODB_URI=mongodb://admin:123456@mongodb:27017/orderflow?authSource=admin"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MONGODB_URI: mongodb://admin:123456@mongodb:27017/orderflow?authSource=admin
+    depends_on: [kafka, mongodb]
+
   saga-orchestrator:
     build: ./saga-orchestrator
     ports: ["8080:8080"]
-    environment: ["KAFKA_BOOTSTRAP_SERVERS=kafka:29092"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_URL: jdbc:postgresql://saga-db:5432/sagadb
+    depends_on: [kafka, saga-db]
+
   product-validation-service:
     build: ./product-validation-service
     ports: ["8090:8090"]
-    environment: ["KAFKA_BOOTSTRAP_SERVERS=kafka:29092", "DB_URL=jdbc:postgresql://product-db:5432/productdb"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_URL: jdbc:postgresql://product-db:5432/productdb
+    depends_on: [kafka, product-db]
+
   payment-service:
     build: ./payment-service
     ports: ["8091:8091"]
-    environment: ["KAFKA_BOOTSTRAP_SERVERS=kafka:29092", "DB_URL=jdbc:postgresql://payment-db:5432/paymentdb"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_URL: jdbc:postgresql://payment-db:5432/paymentdb
+    depends_on: [kafka, payment-db]
+
   inventory-service:
     build: ./inventory-service
     ports: ["8092:8092"]
-    environment: ["KAFKA_BOOTSTRAP_SERVERS=kafka:29092", "DB_URL=jdbc:postgresql://inventory-db:5432/inventorydb"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_URL: jdbc:postgresql://inventory-db:5432/inventorydb
+    depends_on: [kafka, inventory-db]

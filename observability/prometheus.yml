@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: orderflow
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["order-service:3000"]
+        labels:
+          service: order-service
+      - targets: ["saga-orchestrator:8080"]
+        labels:
+          service: saga-orchestrator
+      - targets: ["product-validation-service:8090"]
+        labels:
+          service: product-validation-service
+      - targets: ["payment-service:8091"]
+        labels:
+          service: payment-service
+      - targets: ["inventory-service:8092"]
+        labels:
+          service: inventory-service
